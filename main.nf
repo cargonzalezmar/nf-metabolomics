@@ -1,5 +1,5 @@
 nextflow.enable.dsl=2
-params.mzML_files = "/home/axel/Nextcloud/workspace/MetabolomicsWorkflowMayer/mzML/*.mzML"
+params.mzML_files = "/home/cargonzalezmar/Documents/example_data/*.mzML"
 
 ch_mzML_files = Channel.fromPath(params.mzML_files)
 
@@ -40,7 +40,7 @@ process TEXTEXPORT {
 
     script:
     """
-    TextExporter -in ${consensus_file} -out features.tsv -consensus:add_metavalues
+    TextExporter -in ${consensus_file} -out features.tsv
     """
 }
 
