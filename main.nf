@@ -1,8 +1,7 @@
 nextflow.enable.dsl=2
 
-ch_mzMLs = Channel.fromPath(params.mzML_files)
-
 process FEATUREDETECTION {
+
    input:
    path mzML
 
@@ -10,7 +9,7 @@ process FEATUREDETECTION {
    path "${mzML.toString()[0..-6]}.featureXML"
    
    script:
-   """     
+   """
    FeatureFinderMetabo \\
    -in $mzML \\
    -out "${mzML.toString()[0..-6]}.featureXML" \\
@@ -42,6 +41,7 @@ process FEATUREMAPALIGNMENT {
 }
 
 process FEATURELINKING {
+
     input:
     path featureXML_list
 
@@ -56,11 +56,27 @@ process FEATURELINKING {
     -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol
     -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
     """
+} 
+
+process TEXTEXPORTPY {
+
+    input:
+    path consensus_file
+
+    output:
+    stdout
+
+    script:
+    """
+    term_export.py $consensus_file
+    """
 }
 
 workflow {
+    ch_mzMLs = Channel.fromPath(params.mzML_files)
     ch_featureXMLs = FEATUREDETECTION(ch_mzMLs)
     (ch_featureXMLs, ch_featureXMLs_aligned, ch_trafo) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), 
                                                         ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", "_aligned.featureXML")} ).collect(),
                                                         ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", ".trafoXML")} ).collect())
+    TEXTEXPORTPY(ch_consensus).view()
 }
