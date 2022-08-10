@@ -1,10 +1,10 @@
 {
     "mzML_files": "/home/axel/Nextcloud/workspace/MetabolomicsWorkflowMayer/mzML/*.mzML",
 
-    "noise_threshold_int": 10000,
-    "mass_error_ppm": 10,
-    "remove_single_traces": true,
+    "FeatureDetection_noise_threshold_int": 10000,
+    "FeatureDetection_mass_error_ppm": 10,
+    "FeatureDetection_remove_single_traces": true,
 
-    "link_rt_tol": 30,
-    "link_mz_tol": 10
+    "FeatureLinking_link_rt_tol": 30,
+    "FeatureLinking_link_mz_tol": 10
 }

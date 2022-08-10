@@ -1,10 +1,8 @@
 nextflow.enable.dsl=2
 
-ch_mzML_files = Channel.fromPath(params.mzML_files)
+ch_mzMLs = Channel.fromPath(params.mzML_files)
 
 process FEATUREDETECTION {
-   tag "$sample"
-
    input:
    path mzML
 
@@ -16,10 +14,31 @@ process FEATUREDETECTION {
    FeatureFinderMetabo \\
    -in $mzML \\
    -out "${mzML.toString()[0..-6]}.featureXML" \\
-   -algorithm:common:noise_threshold_int $params.noise_threshold_int \\
-   -algorithm:mtd:mass_error_ppm $params.mass_error_ppm \\
-   -algorithm:ffm:remove_single_traces $params.remove_single_traces
+   -algorithm:common:noise_threshold_int $params.FeatureDetection_noise_threshold_int \\
+   -algorithm:mtd:mass_error_ppm $params.FeatureDetection_mass_error_ppm \\
+   -algorithm:ffm:remove_single_traces $params.FeatureDetection_remove_single_traces
    """
+}
+
+process FEATUREMAPALIGNMENT {
+
+    input:
+    path featureXMLs
+    path featureXMLs_aligned
+    path trafoXMLs
+
+    output:
+    path featureXMLs
+    path featureXMLs_aligned
+    path trafoXMLs
+
+    script:
+    """
+    MapAlignerPoseClustering \\
+    -in $featureXMLs \\
+    -out $featureXMLs_aligned \\
+    -trafo_out $trafoXMLs
+    """
 }
 
 process FEATURELINKING {
@@ -32,28 +51,16 @@ process FEATURELINKING {
     script:
     """
     FeatureLinkerUnlabeledKD \\
-    -in ${featureXML_list} \\
+    -in $featureXML_list \\
     -out linked.consensusXML \\
-    -algorithm:link:rt_tol $params.link_rt_tol \\
-    -algorithm:link:mz_tol $params.link_mz_tol
-    """
-}
-
-process TEXTEXPORT {
-    input:
-    path consensus_file
-
-    output:
-    path "features.tsv" 
-
-    script:
-    """
-    TextExporter -in ${consensus_file} -out features.tsv
+    -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol
+    -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
     """
 }
 
 workflow {
-    ch_feature_files = FEATUREDETECTION(ch_mzML_files)
-    ch_consensus = FEATURELINKING(ch_feature_files.toList())
-    TEXTEXPORT(ch_consensus)
+    ch_featureXMLs = FEATUREDETECTION(ch_mzMLs)
+    (ch_featureXMLs, ch_featureXMLs_aligned, ch_trafo) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), 
+                                                        ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", "_aligned.featureXML")} ).collect(),
+                                                        ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", ".trafoXML")} ).collect())
 }
