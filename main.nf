@@ -1,11 +1,6 @@
 nextflow.enable.dsl=2
 
-params.mzML_files = "/home/cargonzalezmar/Documents/example_data/*.mzML"
-
-ch_mzML_files = Channel.fromPath(params.mzML_files)
-
 process FEATUREDETECTION {
-   tag "$sample"
 
    input:
    path mzML
@@ -14,12 +9,39 @@ process FEATUREDETECTION {
    path "${mzML.toString()[0..-6]}.featureXML"
    
    script:
-   """     
-   FeatureFinderMetabo -in $mzML -out "${mzML.toString()[0..-6]}.featureXML" -algorithm:common:noise_threshold_int $params.noise_threshold_int -algorithm:mtd:mass_error_ppm $params.mass_error_ppm -algorithm:ffm:remove_single_traces $params.remove_single_traces
+   """
+   FeatureFinderMetabo \\
+   -in $mzML \\
+   -out "${mzML.toString()[0..-6]}.featureXML" \\
+   -algorithm:common:noise_threshold_int $params.FeatureDetection_noise_threshold_int \\
+   -algorithm:mtd:mass_error_ppm $params.FeatureDetection_mass_error_ppm \\
+   -algorithm:ffm:remove_single_traces $params.FeatureDetection_remove_single_traces
    """
 }
 
+process FEATUREMAPALIGNMENT {
+
+    input:
+    path featureXMLs
+    path featureXMLs_aligned
+    path trafoXMLs
+
+    output:
+    path featureXMLs
+    path featureXMLs_aligned
+    path trafoXMLs
+
+    script:
+    """
+    MapAlignerPoseClustering \\
+    -in $featureXMLs \\
+    -out $featureXMLs_aligned \\
+    -trafo_out $trafoXMLs
+    """
+}
+
 process FEATURELINKING {
+
     input:
     path featureXML_list
 
@@ -28,9 +50,13 @@ process FEATURELINKING {
 
     script:
     """
-    FeatureLinkerUnlabeledKD -in ${featureXML_list} -out linked.consensusXML -algorithm:link:rt_tol 30.0 -algorithm:link:mz_tol 10.0
+    FeatureLinkerUnlabeledKD \\
+    -in $featureXML_list \\
+    -out linked.consensusXML \\
+    -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol
+    -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
     """
-}
+} 
 
 process TEXTEXPORTPY {
 
@@ -44,10 +70,13 @@ process TEXTEXPORTPY {
     """
     term_export.py $consensus_file
     """
-} 
+}
 
 workflow {
-    ch_feature_files = FEATUREDETECTION(ch_mzML_files)
-    ch_consensus = FEATURELINKING(ch_feature_files.toList())
+    ch_mzMLs = Channel.fromPath(params.mzML_files)
+    ch_featureXMLs = FEATUREDETECTION(ch_mzMLs)
+    (ch_featureXMLs, ch_featureXMLs_aligned, ch_trafo) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), 
+                                                        ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", "_aligned.featureXML")} ).collect(),
+                                                        ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", ".trafoXML")} ).collect())
     TEXTEXPORTPY(ch_consensus).view()
 }
