@@ -53,7 +53,7 @@ process FEATURELINKING {
     FeatureLinkerUnlabeledKD \\
     -in $featureXML_list \\
     -out linked.consensusXML \\
-    -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol
+    -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol \\
     -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
     """
 } 
@@ -78,5 +78,6 @@ workflow {
     (ch_featureXMLs, ch_featureXMLs_aligned, ch_trafo) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), 
                                                         ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", "_aligned.featureXML")} ).collect(),
                                                         ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", ".trafoXML")} ).collect())
+    ch_consensus = FEATURELINKING(ch_featureXMLs_aligned)
     TEXTEXPORTPY(ch_consensus).view()
 }
