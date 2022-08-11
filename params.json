@@ -1,13 +1,17 @@
 {
-    "mzML_files": "/home/axel/Nextcloud/workspace/MetabolomicsWorkflowMayer/mzML/*.mzML",
+    "mzML_files": "/home/axel/Documents/data/WTA/pos/*.mzML",
     "GNPSExport": true,
 
-    "FeatureDetection_noise_threshold_int": 10000,
+    "FeatureDetection_noise_threshold_int": 1000,
     "FeatureDetection_mass_error_ppm": 10,
     "FeatureDetection_remove_single_traces": true,
 
-    "MapAlignment_distance_MZ_max_difference": 10,
-    "MapAlignment_distance_MZ_unit": "ppm",
+    "FeatureMapAlignment_distance_MZ_max_difference": 10,
+    "FeatureMapAlignment_distance_MZ_unit": "ppm",
+
+    "AdductDetection_enabled": true,
+    "AdductDetection_adducts":  "H:+:0.6 Na:+:0.1 NH4:+:0.1 H-1O-1:+:0.1 H-3O-2:+:0.1",
+    "AdductDetection_RT_tolerance": 2, 
 
     "FeatureLinking_link_rt_tol": 30,
     "FeatureLinking_link_mz_tol": 10
