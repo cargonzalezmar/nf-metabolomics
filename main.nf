@@ -34,7 +34,9 @@ process FEATUREMAPALIGNMENT {
     MapAlignerPoseClustering \\
     -in $featureXMLs \\
     -out $featureXMLs \\
-    -trafo_out $trafoXMLs
+    -trafo_out $trafoXMLs \\
+    -algorithm:pairfinder:distance_MZ:max_difference $params.FeatureMapAlignment_distance_MZ_max_difference \\
+    -algorithm:pairfinder:distance_MZ:unit $params.FeatureMapAlignment_distance_MZ_unit
     """
 }
 
@@ -45,15 +47,35 @@ process PEAKMAPTRANSFORMATION {
     path trafoXML
 
     output:
-    path mzML
+    path "${mzML.toString()[0..-6]}_aligned.mzML"
 
     script:
     """
-    MapRTTransformer -in $mzML \\
-    -out $mzML \\
+    MapRTTransformer \\
+    -in $mzML \\
+    -out ${mzML.toString()[0..-6]}_aligned.mzML \\
     -trafo_in $trafoXML
     """
 }
+
+process ADDUCTDETECTION {
+
+    input:
+    path featureXML
+
+    output:
+    path featureXML
+
+    script:
+    """
+    MetaboliteAdductDecharger \\
+    -in $featureXML \\
+    -out_fm $featureXML \\
+    -algorithm:MetaboliteFeatureDeconvolution:potential_adducts $params.AdductDetection_adducts \\
+    -algorithm:MetaboliteFeatureDeconvolution:retention_max_diff $params.AdductDetection_RT_tolerance
+    """
+}
+
 
 process FEATURELINKING {
 
@@ -96,6 +118,7 @@ workflow {
     {
         ch_mzMLs = PEAKMAPTRANSFORMATION(ch_mzMLs.collect().sort().flatten(), ch_trafoXMLs.sort().flatten())
     }
-    ch_consensus = FEATURELINKING(ch_featureXMLs)
+    ch_featureXMLs = ADDUCTDETECTION(ch_featureXMLs.flatten())
+    ch_consensus = FEATURELINKING(ch_featureXMLs.collect())
     TEXTEXPORTPY(ch_consensus).view()
 }
