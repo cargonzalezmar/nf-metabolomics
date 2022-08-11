@@ -118,7 +118,10 @@ workflow {
     {
         ch_mzMLs = PEAKMAPTRANSFORMATION(ch_mzMLs.collect().sort().flatten(), ch_trafoXMLs.sort().flatten())
     }
-    ch_featureXMLs = ADDUCTDETECTION(ch_featureXMLs.flatten())
+    if (params.AdductDetection_enabled)
+    {
+        ch_featureXMLs = ADDUCTDETECTION(ch_featureXMLs.flatten())
+    }
     ch_consensus = FEATURELINKING(ch_featureXMLs.collect())
     TEXTEXPORTPY(ch_consensus).view()
 }
