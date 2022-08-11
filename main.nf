@@ -23,20 +23,35 @@ process FEATUREMAPALIGNMENT {
 
     input:
     path featureXMLs
-    path featureXMLs_aligned
     path trafoXMLs
 
     output:
     path featureXMLs
-    path featureXMLs_aligned
     path trafoXMLs
 
     script:
     """
     MapAlignerPoseClustering \\
     -in $featureXMLs \\
-    -out $featureXMLs_aligned \\
+    -out $featureXMLs \\
     -trafo_out $trafoXMLs
+    """
+}
+
+process PEAKMAPTRANSFORMATION {
+
+    input:
+    path mzML
+    path trafoXML
+
+    output:
+    path mzML
+
+    script:
+    """
+    MapRTTransformer -in $mzML \\
+    -out $mzML \\
+    -trafo_in $trafoXML
     """
 }
 
@@ -75,9 +90,12 @@ process TEXTEXPORTPY {
 workflow {
     ch_mzMLs = Channel.fromPath(params.mzML_files)
     ch_featureXMLs = FEATUREDETECTION(ch_mzMLs)
-    (ch_featureXMLs, ch_featureXMLs_aligned, ch_trafo) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), 
-                                                        ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", "_aligned.featureXML")} ).collect(),
+    (ch_featureXMLs, ch_trafoXMLs) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), 
                                                         ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", ".trafoXML")} ).collect())
-    ch_consensus = FEATURELINKING(ch_featureXMLs_aligned)
+    if (params.GNPSExport)
+    {
+        ch_mzMLs = PEAKMAPTRANSFORMATION(ch_mzMLs.collect().sort().flatten(), ch_trafoXMLs.sort().flatten())
+    }
+    ch_consensus = FEATURELINKING(ch_featureXMLs)
     TEXTEXPORTPY(ch_consensus).view()
 }
