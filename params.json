@@ -1,5 +1,6 @@
 {
     "mzML_files": "/home/axel/Documents/data/WTA/pos/*.mzML",
+    "result_dir": "results",
     "GNPSExport": true,
 
     "FeatureDetection_noise_threshold_int": 1000,

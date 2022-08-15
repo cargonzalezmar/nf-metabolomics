@@ -8,5 +8,5 @@ ConsensusXMLFile().load(sys.argv[1], cm)
 
 df = cm.get_df()
 
-df.to_csv("featureMatrix.tsv", sep="\t")
+df.to_csv(sys.argv[2], sep="\t")
 print(cm.get_df().head())
