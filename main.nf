@@ -98,33 +98,37 @@ process ADDUCTDETECTION {
 
 process FEATURELINKING {
 
+    label "publish"
+
     input:
     path featureXML_list
 
     output:
-    path "linked.consensusXML"
+    path "FeatureMatrix.consensusXML"
 
     script:
     """
     FeatureLinkerUnlabeledKD \\
     -in $featureXML_list \\
-    -out linked.consensusXML \\
+    -out FeatureMatrix.consensusXML \\
     -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol \\
     -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
     """
 } 
 
 process TEXTEXPORTPY {
+    
+    label "publish"
 
     input:
     path consensus_file
 
     output:
-    stdout
+    path "FeatureMatrix.tsv"
 
     script:
     """
-    term_export.py $consensus_file
+    consensus_map_to_dataframe.py $consensus_file "FeatureMatrix.tsv"
     """
 }
 
@@ -152,5 +156,5 @@ workflow {
     
     ch_consensus = FEATURELINKING(ch_featureXMLs.collect())
     
-    TEXTEXPORTPY(ch_consensus).view()
+    TEXTEXPORTPY(ch_consensus)
 }
