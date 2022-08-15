@@ -2,131 +2,125 @@ nextflow.enable.dsl=2
 
 process FEATUREDETECTION {
 
-   input:
-   path mzML
+  input:
+    path mzML
 
-   output:
-   path "${mzML.toString()[0..-6]}.featureXML"
-   
-   script:
-   """
-   FeatureFinderMetabo \\
-   -in $mzML \\
-   -out ${mzML.toString()[0..-6]}.featureXML \\
-   -algorithm:common:noise_threshold_int $params.FeatureDetection_noise_threshold_int \\
-   -algorithm:mtd:mass_error_ppm $params.FeatureDetection_mass_error_ppm \\
-   -algorithm:ffm:remove_single_traces $params.FeatureDetection_remove_single_traces
-   """
+  output:
+    path "${mzML.toString()[0..-6]}.featureXML"
+  
+  script:
+    """
+    FeatureFinderMetabo -in $mzML \\
+                        -out ${mzML.toString()[0..-6]}.featureXML \\
+                        -algorithm:common:noise_threshold_int $params.FeatureDetection_noise_threshold_int \\
+                        -algorithm:mtd:mass_error_ppm $params.FeatureDetection_mass_error_ppm \\
+                        -algorithm:ffm:remove_single_traces $params.FeatureDetection_remove_single_traces
+    """
 }
 
 process FEATUREMAPALIGNMENT {
 
-    input:
+  input:
     path featureXMLs
     path trafoXMLs
 
-    output:
+  output:
     path featureXMLs
     path trafoXMLs
 
-    script:
+  script:
     """
-    MapAlignerPoseClustering \\
-    -in $featureXMLs \\
-    -out $featureXMLs \\
-    -trafo_out $trafoXMLs \\
-    -algorithm:pairfinder:distance_MZ:max_difference $params.FeatureMapAlignment_distance_MZ_max_difference \\
-    -algorithm:pairfinder:distance_MZ:unit $params.FeatureMapAlignment_distance_MZ_unit
+    MapAlignerPoseClustering -in $featureXMLs \\
+                             -out $featureXMLs \\
+                             -trafo_out $trafoXMLs \\
+                             -algorithm:pairfinder:distance_MZ:max_difference $params.FeatureMapAlignment_distance_MZ_max_difference \\
+                             -algorithm:pairfinder:distance_MZ:unit $params.FeatureMapAlignment_distance_MZ_unit
     """
 }
 
 process PEAKMAPTRANSFORMATION {
 
-    input:
+  input:
     path mzML
     path trafoXML
 
-    output:
+  output:
     path "${mzML.toString()[0..-6]}_aligned.mzML"
 
-    script:
+  script:
     """
-    MapRTTransformer \\
-    -in $mzML \\
-    -out ${mzML.toString()[0..-6]}_aligned.mzML \\
-    -trafo_in $trafoXML
+    MapRTTransformer -in $mzML \\
+                     -out ${mzML.toString()[0..-6]}_aligned.mzML \\
+                     -trafo_in $trafoXML
     """
 }
 
 process IDMAPPING {
 
-    input:
+  input:
     path mzML
     path featureXML
 
-    output:
+  output:
     path featureXML
 
-    script:
+  script:
     """
-    IDMapper \\
-    -id $projectDir/resources/empty.idXML \\
-    -in $featureXML \\
-    -spectra:in $mzML \\
-    -out $featureXML
+    IDMapper -id $projectDir/resources/empty.idXML \\
+             -in $featureXML \\
+             -spectra:in $mzML \\
+             -out $featureXML
     """
 }
 
 process ADDUCTDETECTION {
 
-    input:
+  input:
     path featureXML
 
-    output:
+  output:
     path featureXML
 
-    script:
+  script:
     """
-    MetaboliteAdductDecharger \\
-    -in $featureXML \\
-    -out_fm $featureXML \\
-    -algorithm:MetaboliteFeatureDeconvolution:potential_adducts $params.AdductDetection_adducts \\
-    -algorithm:MetaboliteFeatureDeconvolution:retention_max_diff $params.AdductDetection_RT_tolerance
+    MetaboliteAdductDecharger -in $featureXML \\
+                              -out_fm $featureXML \\
+                              -algorithm:MetaboliteFeatureDeconvolution:potential_adducts $params.AdductDetection_adducts \\
+                              -algorithm:MetaboliteFeatureDeconvolution:retention_max_diff $params.AdductDetection_RT_tolerance
     """
 }
 
 
 process FEATURELINKING {
 
-    label "publish"
+  label "publish"
 
-    input:
+  input:
     path featureXML_list
 
-    output:
+  output:
     path "FeatureMatrix.consensusXML"
 
-    script:
+  script:
     """
-    FeatureLinkerUnlabeledKD \\
-    -in $featureXML_list \\
-    -out FeatureMatrix.consensusXML \\
-    -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol \\
-    -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
+    FeatureLinkerUnlabeledKD -in $featureXML_list \\
+                             -out FeatureMatrix.consensusXML \\
+                             -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol \\
+                             -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
     """
 } 
 
 process TEXTEXPORTPY {
     
-    label "publish"
+  label "publish"
 
-    input:
+  input:
     path consensus_file
 
-    output:
+  output:
     path "FeatureMatrix.tsv"
 
-    script:
+  script:
     """
     consensus_map_to_dataframe.py $consensus_file "FeatureMatrix.tsv"
     """
