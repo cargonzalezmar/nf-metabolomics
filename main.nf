@@ -2,6 +2,8 @@ nextflow.enable.dsl=2
 
 process FEATUREDETECTION {
 
+  tag "$mzML"
+
   input:
     path mzML
 
@@ -9,13 +11,13 @@ process FEATUREDETECTION {
     path "${mzML.toString()[0..-6]}.featureXML"
   
   script:
-    """
-    FeatureFinderMetabo -in $mzML \\
-                        -out ${mzML.toString()[0..-6]}.featureXML \\
-                        -algorithm:common:noise_threshold_int $params.FeatureDetection_noise_threshold_int \\
-                        -algorithm:mtd:mass_error_ppm $params.FeatureDetection_mass_error_ppm \\
-                        -algorithm:ffm:remove_single_traces $params.FeatureDetection_remove_single_traces
-    """
+  """
+  FeatureFinderMetabo -in $mzML \\
+                      -out ${mzML.toString()[0..-6]}.featureXML \\
+                      -algorithm:common:noise_threshold_int $params.FeatureDetection_noise_threshold_int \\
+                      -algorithm:mtd:mass_error_ppm $params.FeatureDetection_mass_error_ppm \\
+                      -algorithm:ffm:remove_single_traces $params.FeatureDetection_remove_single_traces
+  """
 }
 
 process FEATUREMAPALIGNMENT {
@@ -29,16 +31,18 @@ process FEATUREMAPALIGNMENT {
     path trafoXMLs
 
   script:
-    """
-    MapAlignerPoseClustering -in $featureXMLs \\
-                             -out $featureXMLs \\
-                             -trafo_out $trafoXMLs \\
-                             -algorithm:pairfinder:distance_MZ:max_difference $params.FeatureMapAlignment_distance_MZ_max_difference \\
-                             -algorithm:pairfinder:distance_MZ:unit $params.FeatureMapAlignment_distance_MZ_unit
-    """
+  """
+  MapAlignerPoseClustering -in $featureXMLs \\
+                            -out $featureXMLs \\
+                            -trafo_out $trafoXMLs \\
+                            -algorithm:pairfinder:distance_MZ:max_difference $params.FeatureMapAlignment_distance_MZ_max_difference \\
+                            -algorithm:pairfinder:distance_MZ:unit $params.FeatureMapAlignment_distance_MZ_unit
+  """
 }
 
 process PEAKMAPTRANSFORMATION {
+
+  tag "$mzML $trafoXML"
 
   input:
     path mzML
@@ -48,15 +52,16 @@ process PEAKMAPTRANSFORMATION {
     path "${mzML.toString()[0..-6]}_aligned.mzML"
 
   script:
-    """
-    MapRTTransformer -in $mzML \\
-                     -out ${mzML.toString()[0..-6]}_aligned.mzML \\
-                     -trafo_in $trafoXML
-    """
+  """
+  MapRTTransformer -in $mzML \\
+                    -out ${mzML.toString()[0..-6]}_aligned.mzML \\
+                    -trafo_in $trafoXML
+  """
 }
 
 process IDMAPPING {
 
+  tag "$mzML $featureXML"
   input:
     path mzML
     path featureXML
@@ -65,15 +70,40 @@ process IDMAPPING {
     path featureXML
 
   script:
-    """
-    IDMapper -id $projectDir/resources/empty.idXML \\
-             -in $featureXML \\
-             -spectra:in $mzML \\
-             -out $featureXML
-    """
+  """
+  IDMapper -id $projectDir/resources/empty.idXML \\
+            -in $featureXML \\
+            -spectra:in $mzML \\
+            -out $featureXML
+  """
+}
+
+process GNPSPREPROCESSING {
+  tag "$mzML $featureXML $trafoXML"
+
+  input:
+    path mzML
+    path featureXML
+    path trafoXML
+  
+  output:
+    path featureXML
+
+  script:
+  """
+  MapRTTransformer -in $mzML \\
+                    -out ${mzML.toString()[0..-6]}_aligned.mzML \\
+                    -trafo_in $trafoXML
+  IDMapper -id $projectDir/resources/empty.idXML \\
+            -in $featureXML \\
+            -spectra:in ${mzML.toString()[0..-6]}_aligned.mzML \\
+            -out $featureXML
+  """ 
 }
 
 process ADDUCTDETECTION {
+
+  tag "$featureXML"
 
   input:
     path featureXML
@@ -82,12 +112,12 @@ process ADDUCTDETECTION {
     path featureXML
 
   script:
-    """
-    MetaboliteAdductDecharger -in $featureXML \\
-                              -out_fm $featureXML \\
-                              -algorithm:MetaboliteFeatureDeconvolution:potential_adducts $params.AdductDetection_adducts \\
-                              -algorithm:MetaboliteFeatureDeconvolution:retention_max_diff $params.AdductDetection_RT_tolerance
-    """
+  """
+  MetaboliteAdductDecharger -in $featureXML \\
+                            -out_fm $featureXML \\
+                            -algorithm:MetaboliteFeatureDeconvolution:potential_adducts $params.AdductDetection_adducts \\
+                            -algorithm:MetaboliteFeatureDeconvolution:retention_max_diff $params.AdductDetection_RT_tolerance
+  """
 }
 
 
@@ -102,12 +132,12 @@ process FEATURELINKING {
     path "FeatureMatrix.consensusXML"
 
   script:
-    """
-    FeatureLinkerUnlabeledKD -in $featureXML_list \\
-                             -out FeatureMatrix.consensusXML \\
-                             -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol \\
-                             -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
-    """
+  """
+  FeatureLinkerUnlabeledKD -in $featureXML_list \\
+                            -out FeatureMatrix.consensusXML \\
+                            -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol \\
+                            -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
+  """
 } 
 
 process TEXTEXPORTPY {
@@ -121,9 +151,9 @@ process TEXTEXPORTPY {
     path "FeatureMatrix.tsv"
 
   script:
-    """
-    consensus_map_to_dataframe.py $consensus_file "FeatureMatrix.tsv"
-    """
+  """
+  consensus_map_to_dataframe.py $consensus_file "FeatureMatrix.tsv"
+  """
 }
 
 workflow {
@@ -135,12 +165,7 @@ workflow {
     
     if (params.GNPSExport)
     {   
-        ch_featureXMLs_sorted = ch_featureXMLs.sort().flatten()
-        ch_mzMLs_sorted = ch_mzMLs.collect().sort().flatten()
-        ch_trafoXMLs_sorted = ch_trafoXMLs.sort().flatten()
-
-        ch_mzMLs = PEAKMAPTRANSFORMATION(ch_mzMLs_sorted, ch_trafoXMLs_sorted)
-        ch_featureXMLs = IDMAPPING(ch_mzMLs_sorted, ch_featureXMLs_sorted)
+        ch_featureXMLs = GNPSPREPROCESSING(ch_mzMLs.collect().sort().flatten(), ch_featureXMLs.sort().flatten(), ch_trafoXMLs.sort().flatten())
     }
     
     if (params.AdductDetection_enabled)
@@ -148,7 +173,5 @@ workflow {
         ch_featureXMLs = ADDUCTDETECTION(ch_featureXMLs)
     }
     
-    ch_consensus = FEATURELINKING(ch_featureXMLs.collect())
-    
-    TEXTEXPORTPY(ch_consensus)
+    FEATURELINKING(ch_featureXMLs.collect()) | TEXTEXPORTPY
 }
