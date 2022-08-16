@@ -40,44 +40,6 @@ process FEATUREMAPALIGNMENT {
   """
 }
 
-process PEAKMAPTRANSFORMATION {
-
-  tag "$mzML $trafoXML"
-
-  input:
-    path mzML
-    path trafoXML
-
-  output:
-    path "${mzML.toString()[0..-6]}_aligned.mzML"
-
-  script:
-  """
-  MapRTTransformer -in $mzML \\
-                    -out ${mzML.toString()[0..-6]}_aligned.mzML \\
-                    -trafo_in $trafoXML
-  """
-}
-
-process IDMAPPING {
-
-  tag "$mzML $featureXML"
-  input:
-    path mzML
-    path featureXML
-
-  output:
-    path featureXML
-
-  script:
-  """
-  IDMapper -id $projectDir/resources/empty.idXML \\
-            -in $featureXML \\
-            -spectra:in $mzML \\
-            -out $featureXML
-  """
-}
-
 process GNPSPREPROCESSING {
   tag "$mzML $featureXML $trafoXML"
 
@@ -161,7 +123,7 @@ workflow {
 
     ch_featureXMLs = FEATUREDETECTION(ch_mzMLs)
 
-    (ch_featureXMLs, ch_trafoXMLs) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), ch_featureXMLs.map( {it.toString().replaceAll(".featureXML", ".trafoXML")} ).collect())
+    (ch_featureXMLs, ch_trafoXMLs) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), ch_featureXMLs.collect({"${it.toString()[0..-11]}trafoXML"}))
     
     if (params.GNPSExport)
     {   
