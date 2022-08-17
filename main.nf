@@ -121,7 +121,7 @@ process CONSENSUSFILEFILTER {
 
 process GNPSEXPORT {
 
-  tag "publish"
+  label "publish"
 
   debug true
 
@@ -132,13 +132,11 @@ process GNPSEXPORT {
   output:
     path "MS2.mgf"
     path "FeatureQuantification.txt"
-    path "SupplementaryPairs.csv"
     path "MetaValues.tsv"
-
 
   script:
   """
-  GNPSExport.py $consensusXML $aligned_mzMLs "MS2.mgf" "FeatureQuantification.txt" "SupplementaryPairs.csv" "MetaValues.tsv"
+  GNPSExport.py $consensusXML $aligned_mzMLs MS2.mgf FeatureQuantification.txt SupplementaryPairs.csv MetaValues.tsv
   """
 }
 
