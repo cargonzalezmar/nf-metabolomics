@@ -123,8 +123,6 @@ process GNPSEXPORT {
 
   label "publish"
 
-  debug true
-
   input:
     path aligned_mzMLs
     path consensusXML
@@ -132,6 +130,7 @@ process GNPSEXPORT {
   output:
     path "MS2.mgf"
     path "FeatureQuantification.txt"
+    path "SupplementaryPairs.csv"
     path "MetaValues.tsv"
 
   script:
@@ -185,7 +184,6 @@ workflow {
     {
       ch_consensus = CONSENSUSFILEFILTER(ch_consensus)
       GNPSEXPORT(ch_mzML_aligned.collect(), ch_consensus)
-      
     }
 
     TEXTEXPORTPY(ch_consensus)
