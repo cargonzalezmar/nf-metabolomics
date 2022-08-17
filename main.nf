@@ -50,6 +50,7 @@ process GNPSPREPROCESSING {
   
   output:
     path featureXML
+    path "${mzML.toString()[0..-6]}_aligned.mzML"
 
   script:
   """
@@ -100,7 +101,43 @@ process FEATURELINKING {
                             -algorithm:link:rt_tol $params.FeatureLinking_link_rt_tol \\
                             -algorithm:link:mz_tol $params.FeatureLinking_link_mz_tol
   """
-} 
+}
+
+process CONSENSUSFILEFILTER {
+
+  input:
+    path consensusXML
+
+  output:
+    path consensusXML
+  
+  script:
+  """
+  FileFilter -in $consensusXML \\
+              -out $consensusXML \\
+              -id:remove_unannotated_features 
+  """
+}
+
+process GNPSEXPORT {
+
+  tag "publish"
+
+  input:
+    path aligned_mzMLs
+    path consensusXML
+  
+  output:
+    path "MS2.mgf"
+    path "FeatureQuantification.txt"
+    path "SupplementaryPairs.csv"
+    path "MetaValues.tsv"
+
+  script:
+  """
+  GNPS_export.py consensusXML aligned_mzMLs
+  """
+}
 
 process TEXTEXPORTPY {
   
@@ -133,7 +170,7 @@ workflow {
     
     if (params.GNPSExport)
     {   
-        ch_featureXMLs = GNPSPREPROCESSING(ch_mzMLs.collect().sort().flatten(), ch_featureXMLs.sort().flatten(), ch_trafoXMLs.sort().flatten())
+        (ch_featureXMLs, ch_mzML_aligned) = GNPSPREPROCESSING(ch_mzMLs.collect().sort().flatten(), ch_featureXMLs.sort().flatten(), ch_trafoXMLs.sort().flatten())
     }
     
     if (params.AdductDetection_enabled)
@@ -141,5 +178,13 @@ workflow {
         ch_featureXMLs = ADDUCTDETECTION(ch_featureXMLs)
     }
     
-    FEATURELINKING(ch_featureXMLs.collect()) | TEXTEXPORTPY
+    ch_consensus = FEATURELINKING(ch_featureXMLs.collect()) 
+    
+    if (params.GNPSExport)
+    {
+      ch_consensus = CONSENSUSFILEFILTER(ch_consensus)
+      GNPSEXPORT(ch_mzML_aligned.collect(), ch_consensus)
+    }
+
+    TEXTEXPORTPY(ch_consensus)
 }
