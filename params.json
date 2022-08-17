@@ -1,5 +1,5 @@
 {
-    "mzML_files": "/home/axel/Documents/data/WTA/pos/*.mzML",
+    "mzML_files": "/home/axel/data/pos/*.mzML",
     "result_dir": "results",
     "GNPSExport": true,
 

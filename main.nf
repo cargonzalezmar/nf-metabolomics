@@ -103,7 +103,15 @@ process FEATURELINKING {
 } 
 
 process TEXTEXPORTPY {
-    
+  
+  tag "dataframe export"
+
+  cpus 2
+
+  memory "4 GB"
+
+  debug true
+
   label "publish"
 
   input:
