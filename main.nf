@@ -110,8 +110,6 @@ process TEXTEXPORTPY {
 
   memory "4 GB"
 
-  debug true
-
   label "publish"
 
   input:
