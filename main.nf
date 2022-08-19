@@ -1,5 +1,24 @@
 nextflow.enable.dsl=2
 
+process MSDATAFRAMEEXPORT {
+
+  tag "$mzML"
+  label "publish_ms_df"
+
+  input:
+    path mzML
+
+  output:
+    path "${mzML.toString()[0..-6]}.tsv"
+
+  script:
+  """
+    mzML_to_dataframe.py $mzML ${mzML.toString()[0..-6]}.tsv
+  """
+
+  }
+
+
 process FEATUREDETECTION {
 
   tag "$mzML"
@@ -83,6 +102,26 @@ process ADDUCTDETECTION {
   """
 }
 
+process FEATUREXMLDATAEXPORT {
+
+  tag "$featureXML"
+  label "publish_featuremap_df"
+  debug true
+
+  input:
+    path featureXML
+
+  output:
+    path "${featureXML.toString()[0..-12]}fm.tsv"
+
+  script:
+  """
+    featuremap_to_df.py $featureXML ${featureXML.toString()[0..-12]}fm.tsv
+  """
+
+  }
+
+
 
 process FEATURELINKING {
 
@@ -164,13 +203,14 @@ process TEXTEXPORTPY {
 workflow {
     ch_mzMLs = Channel.fromPath(params.mzML_files)
 
+
     ch_featureXMLs = FEATUREDETECTION(ch_mzMLs)
 
     (ch_featureXMLs, ch_trafoXMLs) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), ch_featureXMLs.collect({"${it.toString()[0..-11]}trafoXML"}))
     
     if (params.GNPSExport)
     {   
-        (ch_featureXMLs, ch_mzML_aligned) = GNPSPREPROCESSING(ch_mzMLs.collect().sort().flatten(), ch_featureXMLs.sort().flatten(), ch_trafoXMLs.sort().flatten())
+        (ch_featureXMLs, ch_mzML) = GNPSPREPROCESSING(ch_mzMLs.collect().sort().flatten(), ch_featureXMLs.sort().flatten(), ch_trafoXMLs.sort().flatten())
     }
     
     if (params.AdductDetection_enabled)
@@ -183,8 +223,12 @@ workflow {
     if (params.GNPSExport)
     {
       ch_consensus = CONSENSUSFILEFILTER(ch_consensus)
-      GNPSEXPORT(ch_mzML_aligned.collect(), ch_consensus)
+      GNPSEXPORT(ch_mzML.collect(), ch_consensus)
     }
+
+    MSDATAFRAMEEXPORT(ch_mzMLs)
+    FEATUREXMLDATAEXPORT(ch_featureXMLs)
+
 
     TEXTEXPORTPY(ch_consensus)
 }
