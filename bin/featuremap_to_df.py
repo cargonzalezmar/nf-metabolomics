@@ -18,4 +18,4 @@ for f in fm:
     fm_annotated.push_back(f)
 
 df = fm_annotated.get_df(meta_values=["MS2_spectra".encode()], export_peptide_identifications = False)
-df.to_csv(sys.argv[2], sep="\t")
+df.to_pickle(sys.argv[2])
