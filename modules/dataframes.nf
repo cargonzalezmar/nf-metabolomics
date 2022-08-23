@@ -9,11 +9,11 @@ process MZMLDATAFRAME {
     path mzML
 
   output:
-    path "${mzML.toString()[0..-6]}.pkl"
+    path "${mzML.toString()[0..-14]}.pkl"
 
   script:
   """
-    mzML_to_dataframe.py $mzML ${mzML.toString()[0..-6]}.pkl
+    mzML_to_dataframe.py $mzML ${mzML.toString()[0..-14]}.pkl
   """
 
 }
