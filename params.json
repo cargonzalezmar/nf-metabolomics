@@ -1,19 +1,21 @@
 {
-    "mzML_files": "/home/axel/data/pos/*.mzML",
-    "result_dir": "results",
+    "mzML_files": "/home/axel/Documents/Lab18/Lab_18/DOM_Interlab-LCMS_Lab018_A45M_Pos_MS2_rep*.mzML",
+    "result_dir": "Lab18_results",
     "GNPSExport": true,
 
-    "FeatureDetection_noise_threshold_int": 1000,
+    "FeatureDetection_noise_threshold_int": 200000,
     "FeatureDetection_mass_error_ppm": 10,
     "FeatureDetection_remove_single_traces": true,
 
     "FeatureMapAlignment_distance_MZ_max_difference": 10,
     "FeatureMapAlignment_distance_MZ_unit": "ppm",
 
-    "AdductDetection_enabled": true,
+    "AdductDetection_enabled": false,
     "AdductDetection_adducts":  "H:+:0.6 Na:+:0.1 NH4:+:0.1 H-1O-1:+:0.1 H-3O-2:+:0.1",
     "AdductDetection_RT_tolerance": 2, 
 
     "FeatureLinking_link_rt_tol": 30,
-    "FeatureLinking_link_mz_tol": 10
+    "FeatureLinking_link_mz_tol": 10,
+
+    "Sirius_enabled": true
 }

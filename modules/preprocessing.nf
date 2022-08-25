@@ -50,6 +50,9 @@ process ADDUCTDETECTION {
   output:
     path featureXML
 
+  when:
+    params.AdductDetection_enabled
+
   script:
   """
   MetaboliteAdductDecharger -in $featureXML \\
@@ -60,6 +63,8 @@ process ADDUCTDETECTION {
 }
 
 process FEATURELINKING {
+
+  tag "$featureXML_list"
 
   input:
     path featureXML_list
