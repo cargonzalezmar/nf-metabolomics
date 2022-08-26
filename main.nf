@@ -5,18 +5,16 @@ include { gnps } from "./modules/gnps.nf"
 include { sirius } from "./modules/sirius.nf"
 
 workflow {
-    ch_mzMLs = Channel.fromPath(params.mzML_files)
-
-    (ch_mzMLs, ch_featureXMLs, ch_consensus) = preprocessing(ch_mzMLs)
+    Channel.fromPath(params.mzML_files) | preprocessing
 
     if (params.GNPSExport)
     {
-      gnps(ch_mzMLs, ch_consensus)
+      gnps(preprocessing.out[0], preprocessing.out[2])
     }
 
     if (params.Sirius_enabled)
     {
-        (ch_formulas, ch_structures) = sirius(ch_mzMLs, ch_featureXMLs)
+      sirius(preprocessing.out[0], preprocessing.out[1], preprocessing.out[2])
     }
 }
 

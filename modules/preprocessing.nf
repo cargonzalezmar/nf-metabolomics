@@ -128,7 +128,7 @@ workflow preprocessing {
     FEATUREXMLDATAFRAME(ch_featureXMLs)
 
     ch_consensus = FEATURELINKING(ch_featureXMLs.collect())
-    CONSENSUSXMLDATAFRAME(ch_consensus)
+    CONSENSUSXMLDATAFRAME(FEATURELINKING.out)
 
   emit:
     ch_mzMLs

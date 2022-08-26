@@ -9,6 +9,7 @@ process SIRIUS {
   input:
 		path mzML
 		path featureXML
+		path consensus
 	
 	output:
 		path "${featureXML.toString()[0..-12]}_sirius.ms"
@@ -26,9 +27,10 @@ workflow sirius {
 	take:
 		ch_mzMLs
 		ch_featureXMLs
+		ch_consensus
 	
 	main:
-		(ch_formulas, ch_structures) = SIRIUS(ch_mzMLs, ch_featureXMLs.collect().flatten())
+		(ch_formulas, ch_structures) = SIRIUS(ch_mzMLs, ch_featureXMLs, ch_consensus)
 	
 	emit:
 		ch_formulas

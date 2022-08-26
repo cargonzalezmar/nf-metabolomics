@@ -6,13 +6,13 @@ process CONSENSUSFILEFILTER {
     path consensusXML
 
   output:
-    path consensusXML
+    path "${consensusXML.toString()[0..14]}_filtered.consensusXML"
   
   script:
   """
   FileFilter -in $consensusXML \\
-              -out $consensusXML \\
-              -id:remove_unannotated_features 
+              -out ${consensusXML.toString()[0..14]}_filtered.consensusXML \\
+              -id:remove_unannotated_features
   """
 }
 
@@ -32,7 +32,10 @@ process GNPSEXPORT {
 
   script:
   """
-  GNPSExport.py $consensusXML $aligned_mzMLs MS2.mgf FeatureQuantification.txt SupplementaryPairs.csv MetaValues.tsv
+  FileFilter -in $consensusXML \\
+              -out ${consensusXML.toString()[0..14]}_filtered.consensusXML \\
+              -id:remove_unannotated_features
+  GNPSExport.py ${consensusXML.toString()[0..14]}_filtered.consensusXML $aligned_mzMLs MS2.mgf FeatureQuantification.txt SupplementaryPairs.csv MetaValues.tsv
   """
 }
 
@@ -42,6 +45,5 @@ workflow gnps {
     ch_consensus
 
   main:
-    CONSENSUSFILEFILTER(ch_consensus)
-    GNPSEXPORT(ch_mzMLs.collect(), CONSENSUSFILEFILTER.out)
+    GNPSEXPORT(ch_mzMLs.collect(), ch_consensus)
 }
