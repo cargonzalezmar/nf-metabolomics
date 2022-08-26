@@ -1,9 +1,9 @@
 {
-    "mzML_files": "/home/axel/data/pos/*.mzML",
-    "result_dir": "results",
+    "mzML_files": "/home/axel/Documents/Lab18/subset/*.mzML",
+    "result_dir": "subset_results",
     "GNPSExport": true,
 
-    "FeatureDetection_noise_threshold_int": 1000,
+    "FeatureDetection_noise_threshold_int": 200000,
     "FeatureDetection_mass_error_ppm": 10,
     "FeatureDetection_remove_single_traces": true,
 
@@ -15,5 +15,7 @@
     "AdductDetection_RT_tolerance": 2, 
 
     "FeatureLinking_link_rt_tol": 30,
-    "FeatureLinking_link_mz_tol": 10
+    "FeatureLinking_link_mz_tol": 10,
+
+    "Sirius_enabled": true
 }

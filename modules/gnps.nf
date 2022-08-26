@@ -1,42 +1,18 @@
 nextflow.enable.dsl=2
 
-process GNPSPREPARATION {
-  tag "$mzML $featureXML $trafoXML"
-
-  input:
-    path mzML
-    path featureXML
-    path trafoXML
-  
-  output:
-    path featureXML
-    path "${mzML.toString()[0..-6]}_aligned.mzML"
-
-  script:
-  """
-  MapRTTransformer -in $mzML \\
-                    -out ${mzML.toString()[0..-6]}_aligned.mzML \\
-                    -trafo_in $trafoXML
-  IDMapper -id $projectDir/resources/empty.idXML \\
-            -in $featureXML \\
-            -spectra:in ${mzML.toString()[0..-6]}_aligned.mzML \\
-            -out $featureXML
-  """ 
-}
-
 process CONSENSUSFILEFILTER {
 
   input:
     path consensusXML
 
   output:
-    path consensusXML
+    path "${consensusXML.toString()[0..14]}_filtered.consensusXML"
   
   script:
   """
   FileFilter -in $consensusXML \\
-              -out $consensusXML \\
-              -id:remove_unannotated_features 
+              -out ${consensusXML.toString()[0..14]}_filtered.consensusXML \\
+              -id:remove_unannotated_features
   """
 }
 
@@ -56,6 +32,18 @@ process GNPSEXPORT {
 
   script:
   """
-  GNPSExport.py $consensusXML $aligned_mzMLs MS2.mgf FeatureQuantification.txt SupplementaryPairs.csv MetaValues.tsv
+  FileFilter -in $consensusXML \\
+              -out ${consensusXML.toString()[0..14]}_filtered.consensusXML \\
+              -id:remove_unannotated_features
+  GNPSExport.py ${consensusXML.toString()[0..14]}_filtered.consensusXML $aligned_mzMLs MS2.mgf FeatureQuantification.txt SupplementaryPairs.csv MetaValues.tsv
   """
+}
+
+workflow gnps {
+  take:
+    ch_mzMLs
+    ch_consensus
+
+  main:
+    GNPSEXPORT(ch_mzMLs.collect(), ch_consensus)
 }
