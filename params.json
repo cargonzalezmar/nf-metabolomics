@@ -1,6 +1,6 @@
 {
-    "mzML_files": "/home/axel/Documents/Lab18/Lab_18/DOM_Interlab-LCMS_Lab018_A45M_Pos_MS2_rep*.mzML",
-    "result_dir": "Lab18_results",
+    "mzML_files": "/home/axel/Documents/Lab18/subset/*.mzML",
+    "result_dir": "subset_results",
     "GNPSExport": true,
 
     "FeatureDetection_noise_threshold_int": 200000,
@@ -10,7 +10,7 @@
     "FeatureMapAlignment_distance_MZ_max_difference": 10,
     "FeatureMapAlignment_distance_MZ_unit": "ppm",
 
-    "AdductDetection_enabled": false,
+    "AdductDetection_enabled": true,
     "AdductDetection_adducts":  "H:+:0.6 Na:+:0.1 NH4:+:0.1 H-1O-1:+:0.1 H-3O-2:+:0.1",
     "AdductDetection_RT_tolerance": 2, 
 

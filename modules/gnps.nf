@@ -1,29 +1,5 @@
 nextflow.enable.dsl=2
 
-process GNPSPREPARATION {
-  tag "$mzML $featureXML $trafoXML"
-
-  input:
-    path mzML
-    path featureXML
-    path trafoXML
-  
-  output:
-    path featureXML
-    path "${mzML.toString()[0..-6]}_aligned.mzML"
-
-  script:
-  """
-  MapRTTransformer -in $mzML \\
-                    -out ${mzML.toString()[0..-6]}_aligned.mzML \\
-                    -trafo_in $trafoXML
-  IDMapper -id $projectDir/resources/empty.idXML \\
-            -in $featureXML \\
-            -spectra:in ${mzML.toString()[0..-6]}_aligned.mzML \\
-            -out $featureXML
-  """ 
-}
-
 process CONSENSUSFILEFILTER {
 
   input:
@@ -58,4 +34,14 @@ process GNPSEXPORT {
   """
   GNPSExport.py $consensusXML $aligned_mzMLs MS2.mgf FeatureQuantification.txt SupplementaryPairs.csv MetaValues.tsv
   """
+}
+
+workflow gnps {
+  take:
+    ch_mzMLs
+    ch_consensus
+
+  main:
+    CONSENSUSFILEFILTER(ch_consensus)
+    GNPSEXPORT(ch_mzMLs.collect(), CONSENSUSFILEFILTER.out)
 }
