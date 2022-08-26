@@ -107,7 +107,7 @@ process FEATURELINKING {
   """
 }
 
-workflow preprocessing {
+workflow openms {
   take: 
     ch_mzMLs
   
