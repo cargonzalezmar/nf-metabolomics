@@ -17,5 +17,5 @@
     "FeatureLinking_link_rt_tol": 30,
     "FeatureLinking_link_mz_tol": 10,
 
-    "Sirius_enabled": true
+    "Sirius": true
 }
