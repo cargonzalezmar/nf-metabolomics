@@ -1,21 +1,5 @@
 nextflow.enable.dsl=2
 
-process CONSENSUSFILEFILTER {
-
-  input:
-    path consensusXML
-
-  output:
-    path "${consensusXML.toString()[0..14]}_filtered.consensusXML"
-  
-  script:
-  """
-  FileFilter -in $consensusXML \\
-              -out ${consensusXML.toString()[0..14]}_filtered.consensusXML \\
-              -id:remove_unannotated_features
-  """
-}
-
 process GNPSEXPORT {
 
   label "publish_gnps"
@@ -39,7 +23,7 @@ process GNPSEXPORT {
   """
 }
 
-workflow gnps {
+workflow gnpsexport {
   take:
     ch_mzMLs
     ch_consensus
