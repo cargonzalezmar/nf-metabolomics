@@ -11,6 +11,7 @@ dependencies:
   - pip
   - openms
   - sirius-csifingerid
+  - pyteomics
   - pip:
     - ./resources/pyopenms_nightly-3.0.0.dev20220609-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
     - pandas == 1.4.3

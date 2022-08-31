@@ -128,10 +128,11 @@ workflow openms {
     FEATUREXMLDATAFRAME(ch_featureXMLs)
 
     ch_consensus = FEATURELINKING(ch_featureXMLs.collect())
-    CONSENSUSXMLDATAFRAME(FEATURELINKING.out)
+    ch_feature_matrix = CONSENSUSXMLDATAFRAME(FEATURELINKING.out)
 
   emit:
     ch_mzMLs
     ch_featureXMLs
     ch_consensus
+    ch_feature_matrix
 }

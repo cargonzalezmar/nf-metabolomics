@@ -8,13 +8,12 @@ ConsensusXMLFile().load(sys.argv[1], cm)
 
 df = cm.get_df()
 
-best_ions = []
-for f in cm:
-    if f.metaValueExists("best ion"):
-        best_ions.append(f.getMetaValue("best ion"))
-    else:
-        best_ions.append("")
+for cf in cm:
+    if cf.metaValueExists("best ion"):
+        df["adduct"] = [cf.getMetaValue("best ion") for cf in cm]
+        break
+df["feature_ids"] = [[str(handle.getUniqueId()) for handle in cf.getFeatureList()] for cf in cm]
+df= df.reset_index()
+df= df.drop(columns= ["sequence"])
 
-df["best ion"] = best_ions
-
-df.to_csv(sys.argv[2], sep="\t")
+df.to_pickle(sys.argv[2])

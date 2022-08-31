@@ -36,19 +36,32 @@ process FEATUREXMLDATAFRAME {
 }
 
 process CONSENSUSXMLDATAFRAME {
-  
-  tag "dataframe export"
-
-  label "publish_main"
 
   input:
     path consensus_file
 
   output:
+    path "FeatureMatrix.pkl"
+
+  script:
+  """
+  consensus_map_to_dataframe.py $consensus_file "FeatureMatrix.pkl"
+  """
+}
+
+process PUBLISHFEATUREMATRIX {
+
+  label "publish_main"
+
+  input:
+    path feature_matrix
+
+  output:
+    path feature_matrix
     path "FeatureMatrix.tsv"
 
   script:
   """
-  consensus_map_to_dataframe.py $consensus_file "FeatureMatrix.tsv"
+  publish_feature_matrix.py $feature_matrix FeatureMatrix.tsv
   """
 }
