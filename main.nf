@@ -8,8 +8,6 @@ include { PUBLISHFEATUREMATRIX } from "./modules/dataframes.nf"
 workflow {
     Channel.fromPath(params.mzML_files) | openms
 
-    // PUBLISHFEATUREMATRIX(openms.out[3])
-
     if (params.Sirius)
     {
       sirius(openms.out[0], openms.out[1], openms.out[3])
