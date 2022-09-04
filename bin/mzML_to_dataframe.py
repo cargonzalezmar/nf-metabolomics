@@ -21,7 +21,10 @@ while i < len(df["mslevel"]):
             while df["mslevel"][j] == 2:
                 ms1_to_ms2[i].append(j)
                 ms1_to_ms2[j].append(i)
-                j += 1
+                if (j == (len(df["mslevel"])-1)):
+                    break
+                else:
+                    j += 1
         i = j
     else:
         i += 1
