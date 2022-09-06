@@ -6,6 +6,7 @@
     "FeatureDetection_noise_threshold_int": 200000,
     "FeatureDetection_mass_error_ppm": 10,
     "FeatureDetection_remove_single_traces": true,
+    "FeatureDetection_report_EICs": true,
 
     "FeatureMapAlignment_distance_MZ_max_difference": 10,
     "FeatureMapAlignment_distance_MZ_unit": "ppm",

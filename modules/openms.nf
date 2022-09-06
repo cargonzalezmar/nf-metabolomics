@@ -11,14 +11,17 @@ process FEATUREDETECTION {
 
   output:
     path "${mzML.toString()[0..-6]}.featureXML"
+    path "${mzML.toString()[0..-6]}_chrom.mzML"
   
   script:
   """
   FeatureFinderMetabo -in $mzML \\
                       -out ${mzML.toString()[0..-6]}.featureXML \\
+                      -out_chrom ${mzML.toString()[0..-6]}_chrom.mzML \\
                       -algorithm:common:noise_threshold_int $params.FeatureDetection_noise_threshold_int \\
                       -algorithm:mtd:mass_error_ppm $params.FeatureDetection_mass_error_ppm \\
-                      -algorithm:ffm:remove_single_traces $params.FeatureDetection_remove_single_traces
+                      -algorithm:ffm:remove_single_traces $params.FeatureDetection_remove_single_traces \\
+                      -algorithm:ffm:report_convex_hulls $params.FeatureDetection_report_EICs
   """
 }
 
@@ -112,7 +115,7 @@ workflow openms {
     ch_mzMLs
   
   main:
-    ch_featureXMLs = FEATUREDETECTION(ch_mzMLs)
+    (ch_featureXMLs, ch_chroms) = FEATUREDETECTION(ch_mzMLs)
 
     (ch_featureXMLs, ch_trafoXMLs) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), ch_featureXMLs.collect({"${it.toString()[0..-11]}trafoXML"}))
   
@@ -125,7 +128,7 @@ workflow openms {
       ch_featureXMLs = ADDUCTDETECTION(ch_featureXMLs)
     }
     
-    FEATUREXMLDATAFRAME(ch_featureXMLs)
+    FEATUREXMLDATAFRAME(ch_featureXMLs.collect().sort().flatten(), ch_chroms.collect().sort().flatten())
 
     ch_consensus = FEATURELINKING(ch_featureXMLs.collect())
     ch_feature_matrix = CONSENSUSXMLDATAFRAME(FEATURELINKING.out)

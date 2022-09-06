@@ -20,18 +20,19 @@ process MZMLDATAFRAME {
 
 process FEATUREXMLDATAFRAME {
 
-  tag "$featureXML"
+  tag "$featureXML $chom_mzML"
   label "publish_featuremap_df"
 
   input:
     path featureXML
+    path chrom_mzML
 
   output:
     path "${featureXML.toString()[0..-12]}fm.pkl"
 
   script:
   """
-    featuremap_to_df.py $featureXML ${featureXML.toString()[0..-12]}fm.pkl
+    featuremap_to_df.py $featureXML $chrom_mzML ${featureXML.toString()[0..-12]}fm.pkl
   """
 }
 

@@ -5,17 +5,32 @@ from pyopenms import *
 
 fm = FeatureMap()
 FeatureXMLFile().load(sys.argv[1], fm)
-fm_annotated = FeatureMap(fm)
-fm_annotated.clear(False)
+
+df = fm.get_df(meta_values=["MS2_spectra".encode()], export_peptide_identifications = False)
+
+# annotate fm with MS2 scan numbers
+scan_list = []
 for f in fm:
     # get MS2 scan numbers from PeptideIdentifications
     peps = f.getPeptideIdentifications()
+    scans = []
     if peps:
-        scans = ""
         for pep in peps:
-            scans = scans + str(pep.getMetaValue("spectrum_index")) + ","
-        f.setMetaValue("MS2_spectra", scans)
-    fm_annotated.push_back(f)
+            scans.append(pep.getMetaValue("spectrum_index"))
+    scan_list.append(scans)
+df["MS2_spectra"] = scan_list
 
-df = fm_annotated.get_df(meta_values=["MS2_spectra".encode()], export_peptide_identifications = False)
-df.to_pickle(sys.argv[2])
+# annotate chromatogram data
+df["chroms"] = [[] for _ in range(len(df))]
+exp = MSExperiment()
+MzMLFile().load(sys.argv[2], exp)
+chroms = exp.getChromatograms()
+for chrom in chroms:
+    feature_id = chrom.getNativeID().split("_")[0]
+    df.loc[feature_id, ["chroms"]][0] = df.loc[feature_id, ["chroms"]][0].append(
+        {
+        "rt": [peak.getRT() for peak in chrom],
+        "intensity": [peak.getIntensity() for peak in chrom]
+        })
+
+df.to_pickle(sys.argv[3])
