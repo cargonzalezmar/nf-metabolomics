@@ -55,9 +55,6 @@ process ADDUCTDETECTION {
   output:
     path featureXML
 
-  when:
-    params.AdductDetection_enabled
-
   script:
   """
   MetaboliteAdductDecharger -in $featureXML \\
@@ -110,32 +107,43 @@ process FEATURELINKING {
   """
 }
 
+def split_path(path) {
+    return path.toString().split("/")[-1]
+}
+
 workflow openms {
   take: 
     ch_mzMLs
   
   main:
-    (ch_featureXMLs, ch_chroms) = FEATUREDETECTION(ch_mzMLs)
+    FEATUREDETECTION(ch_mzMLs)
 
-    (ch_featureXMLs, ch_trafoXMLs) = FEATUREMAPALIGNMENT(ch_featureXMLs.collect(), ch_featureXMLs.collect({"${it.toString()[0..-11]}trafoXML"}))
-  
-    (ch_featureXMLs, ch_mzMLs) = ANNOTATEMS2(ch_mzMLs.collect().sort().flatten(), ch_featureXMLs.sort().flatten(), ch_trafoXMLs.sort().flatten())
-
-    MZMLDATAFRAME(ch_mzMLs)
+    FEATUREMAPALIGNMENT(FEATUREDETECTION.out[0].collect(), FEATUREDETECTION.out[0].collect({"${it.toString()[0..-11]}trafoXML"}))
     
-    if (params.AdductDetection_enabled)
+    ANNOTATEMS2(ch_mzMLs.collect().sort({p -> split_path(p)}).flatten(),
+                FEATUREMAPALIGNMENT.out[0].sort({p -> split_path(p)}).flatten(),
+                FEATUREMAPALIGNMENT.out[1].sort({p -> split_path(p)}).flatten())
+
+    MZMLDATAFRAME(ANNOTATEMS2.out[1])
+
+    if (params.AdductDetection)
     {
-      ch_featureXMLs = ADDUCTDETECTION(ch_featureXMLs)
+      ch_features = ADDUCTDETECTION(ANNOTATEMS2.out[0])
     }
-    
-    FEATUREXMLDATAFRAME(ch_featureXMLs.collect().sort().flatten(), ch_chroms.collect().sort().flatten())
+    else
+    {
+      ch_features = ANNOTATEMS2.out[0]
+    }
 
-    ch_consensus = FEATURELINKING(ch_featureXMLs.collect())
-    ch_feature_matrix = CONSENSUSXMLDATAFRAME(FEATURELINKING.out)
+    FEATUREXMLDATAFRAME(ch_features.collect().sort(p -> split_path(p)).flatten(), 
+                        FEATUREDETECTION.out[1].collect().sort(p -> split_path(p)).flatten())
+
+    FEATURELINKING(ch_features.collect())
+    CONSENSUSXMLDATAFRAME(FEATURELINKING.out)
 
   emit:
-    ch_mzMLs
-    ch_featureXMLs
-    ch_consensus
-    ch_feature_matrix
+    ANNOTATEMS2.out[1]
+    ch_features
+    FEATURELINKING.out
+    CONSENSUSXMLDATAFRAME.out
 }

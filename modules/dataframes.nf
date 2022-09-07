@@ -20,7 +20,7 @@ process MZMLDATAFRAME {
 
 process FEATUREXMLDATAFRAME {
 
-  tag "$featureXML $chom_mzML"
+  tag "$featureXML $chrom_mzML"
   label "publish_featuremap_df"
 
   input:
