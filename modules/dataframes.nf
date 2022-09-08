@@ -66,3 +66,21 @@ process PUBLISHFEATUREMATRIX {
   publish_feature_matrix.py $feature_matrix FeatureMatrix.tsv
   """
 }
+
+
+process PUBLISHCOMPOUNDSVG {
+
+  label "publish_main"
+
+  input:
+    path feature_matrix
+
+  output:
+    path feature_matrix
+    path "PredCompoundsSVG.pkl"
+
+  script:
+  """
+  smile_to_svg.py $feature_matrix PredCompoundsSVG.pkl
+  """
+}
